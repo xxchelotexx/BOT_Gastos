@@ -95,7 +95,7 @@ def main():
     )
 
     logger.info("Bot iniciado...")
-    app.run_polling()
+    app.run_polling(poll_interval=60)
 
 
 if __name__ == "__main__":
