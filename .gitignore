@@ -1,0 +1,17 @@
+# Carpetas a ignorar
+__pycache__/
+temp_audio/
+venv/
+.env
+googleapi.json
+
+# Archivos Python compilados
+*.pyc
+
+# Entornos virtuales (alternativas comunes)
+.venv/
+env/
+
+# Archivos temporales
+*.log
+
