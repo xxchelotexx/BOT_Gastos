@@ -4,8 +4,8 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
 from sheets import append_row
 from parser_ai import parse_message
-from voice import transcribe_voice
 
+# Configuración de logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
@@ -14,40 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Maneja los mensajes de texto entrantes."""
     text = update.message.text
     await process_input(update, text)
 
 
-async def handle_voice(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    voice = update.message.voice
-    file = await context.bot.get_file(voice.file_id)
-
-    # Crear carpeta temp_audio si no existe
-    os.makedirs("temp_audio", exist_ok=True)
-
-    file_path = os.path.join("temp_audio", f"{voice.file_id}.ogg")
-
-    # Descargar audio
-    await file.download_to_drive(file_path)
-
-    # Transcribir audio
-    text = transcribe_voice(file_path)
-
-    if not text:
-        await update.message.reply_text(
-            "❌ No pude transcribir el mensaje de voz. Intenta de nuevo."
-        )
-        return
-
-    await update.message.reply_text(
-        f"🎙️ Transcripción: _{text}_",
-        parse_mode="Markdown"
-    )
-
-    await process_input(update, text)
-
-
 async def process_input(update: Update, text: str):
+    """Procesa el texto, lo parsea y lo guarda en Google Sheets."""
     data = parse_message(text)
 
     if not data:
@@ -75,27 +48,31 @@ async def process_input(update: Update, text: str):
 
     except Exception as e:
         logger.error(f"Error al guardar en Google Sheets: {e}")
-
         await update.message.reply_text(
             "❌ Error al guardar en la hoja de cálculo."
         )
 
 
 def main():
-    token = os.environ["TELEGRAM_TOKEN"]
+    # Obtener token de variables de entorno
+    token = os.getenv("TELEGRAM_TOKEN")
+    
+    if not token:
+        logger.error("No se encontró la variable de entorno TELEGRAM_TOKEN")
+        return
 
     app = ApplicationBuilder().token(token).build()
 
+    # Solo registramos el manejador de texto
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text)
     )
 
-    app.add_handler(
-        MessageHandler(filters.VOICE, handle_voice)
-    )
-
-    logger.info("Bot iniciado...")
-    app.run_polling(poll_interval=60)
+    logger.info("Bot iniciado (Solo texto)...")
+    
+    # He bajado el poll_interval a un valor más estándar (1.0), 
+    # 60 segundos era demasiado lento para responder.
+    app.run_polling(poll_interval=10)
 
 
 if __name__ == "__main__":
