@@ -3,6 +3,7 @@ import re
 import json
 import logging
 from datetime import datetime
+from typing import Dict, Optional
 import pytz
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,8 @@ def get_current_datetime():
     return fecha, hora
 
 
-def parse_message(text: str) -> dict | None:
+#def parse_message(text: str) -> dict | None:
+def parse_message(text: str) -> Optional[Dict]:
     data = parse_simple(text)
     if data:
         return data
@@ -35,7 +37,7 @@ def parse_message(text: str) -> dict | None:
     return parse_with_gemini(text)
 
 
-def parse_simple(text: str) -> dict | None:
+def parse_simple(text: str) -> Optional[Dict]:
     """Formato exacto: Nombre, Categoría, Producto, Precio"""
     parts = [p.strip() for p in text.split(",")]
 
@@ -54,7 +56,7 @@ def parse_simple(text: str) -> dict | None:
     return None
 
 
-def parse_flexible(text: str) -> dict | None:
+def parse_flexible(text: str) -> Optional[Dict]:
     """
     Soporta frases como:
     Marcelo mercado banana 5Bs
@@ -109,7 +111,7 @@ def parse_flexible(text: str) -> dict | None:
     return None
 
 
-def parse_with_gemini(text: str) -> dict | None:
+def parse_with_gemini(text: str) -> Optional[Dict]:
     """Fallback usando Gemini si no pudo parsear localmente."""
 
     api_key = os.environ.get("GEMINI_API_KEY")
